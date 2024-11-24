@@ -1,4 +1,4 @@
-# C++23 Namespace Attributes & Attribute Aliases Proposal
+# C++ Namespace Attributes & Attribute Aliases Proposal
 ## Core Attributes & Custom Attribute Aliases for Namespaces
 
 ## Motivation & Impact
