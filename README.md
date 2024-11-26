@@ -16,7 +16,6 @@ These additions provide powerful tools for code organization, maintenance, and e
 4. Support team-specific coding standards through attribute aliases
 5. Maintain 100% backward compatibility in single translation unit by:
    - Preserving existing behavior for unannotated namespaces
-   - Requiring consistent attributes within translation units
    - Allowing mixed usage of attributed and non-attributed code
    - Supporting incremental adoption without breaking changes
    - Enabling safe refactoring of existing code
@@ -38,7 +37,7 @@ These additions provide powerful tools for code organization, maintenance, and e
    - Better IDE support potential
 
 4. **Future Evolution Path**
-   - Framework for new language features
+   - Framework for use with new language features
    - Backward compatible opt-in mechanism
    - Support for team-specific extensions
 
