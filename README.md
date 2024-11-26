@@ -4,7 +4,7 @@
 ## Motivation & Impact
 
 This proposal introduces two key features to C++:
-1. Ability to apply attributes to namespaces, affecting all contained declarations
+1. Ability to apply attributes to namespaces, affecting all contained declarations whitin given block of namespace declaration
 2. Mechanism to define aliases for sets of attributes, enabling consistent attribute policies
 
 These additions provide powerful tools for code organization, maintenance, and evolution while maintaining complete backward compatibility.
@@ -28,7 +28,7 @@ These additions provide powerful tools for code organization, maintenance, and e
    - Lower maintenance burden
 
 2. **Enhanced Consistency**
-   - Enforced attribute policies across namespaces
+   - Enforced attribute policies across blocks of code 
    - Reduced chance of missing attributes
    - Clearer code intent
 
@@ -63,16 +63,39 @@ These additions provide powerful tools for code organization, maintenance, and e
 
 ### 1.1 Basic Rules
 - Unannotated namespaces follow standard C++ behavior
-- Annotated namespaces must have consistent attributes across all declarations
-- Support for attribute aliases using vendor/project-specific namespaces
+- Annotated namespace declaration affects only code within it declaration scope
+- Support for attribute aliases using vendor/project-specific sets of attributes
 - Focus on essential attributes with clear use cases
-- Individual functions can override namespace-level attributes when needed
+- Individual functions can override namespace code block attributes when needed
+
+### 1.1.1 Annotated namespace declaration scope
+Explanation of core concept
+
+By "annotated namespace declaration scope" document means a namespace code block surrounded by {} see BEGIN and END comments
+```cpp
+[[attribute_x]]
+namespace algorithms 
+// BEGIN
+{
+    int binary_search(span<int> data, int value);  // attribute_x applied
+
+}
+// END
+
+// Other code block of the same namespace
+namespace algorithms 
+{
+    int debug_search(span<int> data, int value);   // attribute_x not applied
+
+}
+```
+
 
 ### 1.2 Core Supported Attributes
-The following attributes are proposed as initial examples demonstrating the utility and scope of namespace attributes. The mechanism is extensible to support additional attributes as needed:
+The following attributes/keywords are proposed as initialy supported that can be used as namespace attributes.
 
 #### [[nodiscard]]
-- Enforces return value usage across namespace
+- Enforces return value usage across scope of code block within given namespace declaration
 - Reduces error-prone code by preventing ignored returns
 - Reduces number of common errors by forgetting to annotate with nodiscard an n-th function declaration
 - Can be overridden on individual functions using [[maybe_unused]]
@@ -80,7 +103,9 @@ The following attributes are proposed as initial examples demonstrating the util
 
 Example of [[nodiscard]] override:
 ```cpp
-[[nodiscard]] namespace algorithms {
+[[nodiscard]]
+namespace algorithms 
+{
     int binary_search(span<int> data, int value);  // nodiscard applied
     
     [[maybe_unused]] // Overrides namespace nodiscard
@@ -99,18 +124,19 @@ Example of [[nodiscard]] override:
 - Supports gradual API evolution
 - Enables clear migration paths
 
-#### [[constexpr_default]] (new)
+#### constexpr
 - Makes constexpr the default for all functions in namespace
-- Supports compile-time evaluation by default
 - Non-inline functions or explicitly marked inline functions opt-out of constexpr behavior
 ```cpp
-[[constexpr_default]] namespace math {
+constexpr namespace math {
     // Implicitly constexpr due to namespace attribute
+    double sqrt(double x);
+    
     double sqrt(double x) { 
         return /*...*/; 
     }
     
-    // Opt-out through non-inline
+    // Opt-out through non-inline, implementation not available
     double expensive_calc(double x);  // Not constexpr
     
     // Opt-out through explicit inline
@@ -123,29 +149,24 @@ Example of [[nodiscard]] override:
 ## 2. Attribute Consistency Model
 
 ### 2.1 Basic Declaration Rules
+attributes or constexpr applied to namespace declaration affects only current scope of namespace code block
 ```cpp
-// All declarations must match
-[[nodiscard]] namespace math {
-    double sqrt(double);
+
+[[nodiscard]] 
+constexpr namespace math 
+{
+    double sqrt(double); // constexpr and nodiscard from namespace code block
 }
 
-[[nodiscard]] namespace math {  // OK: matches previous declaration
-    double pow(double, double);
+[[deprecated]]
+namespace math 
+{ 
+    double pow(double, double); // deprecated from namespace code block
 }
 
-namespace math {  // Error: missing [[nodiscard]] from previous declaration
-    double cos(double);
-}
-```
-
-### 2.2 Multiple Attributes
-```cpp
-[[nodiscard, constexpr_default]] namespace algorithms {
-    int binary_search(span<int> data, int value);
-}
-
-[[nodiscard, constexpr_default]] namespace algorithms {  // OK: exact match
-    int lower_bound(span<int> data, int value);
+namespace math 
+{
+    double cos(double); // default c++ rules
 }
 ```
 
@@ -158,13 +179,17 @@ namespace math {  // Error: missing [[nodiscard]] from previous declaration
 
 Example of attribute inheritance:
 ```cpp
-[[nodiscard]] namespace parent {
+[[nodiscard]] 
+namespace parent 
+{
     int parent_func();  // nodiscard applied
     
-    namespace child {   // inherits nodiscard
+    namespace child // inherits nodiscard
+    {   
         int child_func();  // nodiscard applied
         
-        namespace grandchild {  // inherits nodiscard
+        namespace grandchild // inherits nodiscard
+        {  
             int grandchild_func();  // nodiscard applied
         }
     }
@@ -172,26 +197,32 @@ Example of attribute inheritance:
 ```
 
 ### 3.2 Attribute Override Rules
-- Nested namespaces can override parent namespace attributes
-- Override applies to the entire nested namespace and its children
-- Original parent attributes remain unchanged
+- Nested namespaces can override parent namespace code block attributes
+- Override applies to the entire nested namespace code block and its children
+- Original parent namespace code block attributes remain unchanged
 - Multiple attributes are handled individually for override purposes
 
 Example of attribute override:
 ```cpp
-[[nodiscard]] namespace algorithms {
+[[nodiscard]] 
+namespace algorithms 
+{
     int parent_search(span<int>);  // nodiscard applied
     
-    [[maybe_unused]] namespace debug {  // overrides parent nodiscard
+    [[maybe_unused]] 
+    namespace debug // overrides parent nodiscard
+    {  
         int debug_search(span<int>);    // maybe_unused applied
         
-        namespace detail {  // inherits debug's maybe_unused
+        namespace detail // inherits debug's maybe_unused
+        {  
             int helper_func();  // maybe_unused applied
         }
     }
     
-    namespace optimized {  // inherits parent nodiscard
-        int fast_search(span<int>);  // nodiscard applied
+    constexpr namespace optimized // inherits parent nodiscard
+    {  
+        int fast_search(span<int>) {/* .. */}  // constexpr and nodiscard applied
     }
 }
 ```
@@ -203,38 +234,52 @@ Example of attribute override:
 
 Example of inline namespace attributes:
 ```cpp
-[[nodiscard]] namespace math {
-    double basic_sqrt(double);  // nodiscard applied
+
+[[maybe_unused]] 
+namespace math 
+{
+    double basic_sqrt(double);  // maybe_unused applied
     
-    [[maybe_unused]] inline namespace v2 {
-        double advanced_sqrt(double);  // maybe_unused applied
+    [[nodiscard]] 
+    inline namespace v2 
+    {
+        double advanced_sqrt(double);  // nodiscard applied
         
-        namespace detail {  // inherits v2's maybe_unused
-            double helper_func();  // maybe_unused applied
+        namespace detail // inherits v2's nodiscard
+        {  
+            double helper_func();  // nodiscard applied
         }
     }
     
     // When v2 is inlined:
-    // math::basic_sqrt      - nodiscard applied
-    // math::advanced_sqrt   - maybe_unused applied (from v2)
-    // math::detail::helper_func - maybe_unused applied (from v2)
+    // math::basic_sqrt      - maybe_unused applied
+    // math::advanced_sqrt   - nodiscard applied (from v2)
+    // math::detail::helper_func - nodiscard applied (from v2)
 }
 ```
 
 ### 3.4 Multiple Attribute Interaction
 ```cpp
-[[nodiscard, constexpr_default]] namespace compute {
+[[nodiscard]] 
+constexpr namespace compute 
+{
     int base_calc(int);  // both attributes applied
     
-    [[maybe_unused]] namespace debug {
+    [[maybe_unused]]
+    namespace debug 
+    {
         int debug_calc(int);  // maybe_unused only, keeps constexpr_default
         
-        [[deprecated]] namespace old {  // combines maybe_unused and deprecated
+        [[deprecated]]
+        namespace old // combines maybe_unused and deprecated
+        {  
             int legacy_calc(int);  // maybe_unused and deprecated applied
         }
     }
     
-    [[deprecated]] inline namespace v1 {
+    [[deprecated]]
+    inline namespace v1 
+    {
         // When inlined, these keep deprecated but inherit nodiscard
         int old_calc(int);  // nodiscard and deprecated applied
     }
@@ -245,66 +290,27 @@ Example of inline namespace attributes:
 ## 4. Backward Compatibility
 
 ### 4.1 Example of Backward Compatibility
+Because all unannotated namespace code blocks retain original C++ rules it does not affect in any way existing code included into the same translation unit
 ```cpp
+
+
 // old_header.hpp (existing code)
 namespace math {
     double sqrt(double);
 }
 
 // new_feature.hpp (new code)
-[[nodiscard]] namespace new_math {
+[[nodiscard]] 
+namespace math {
     double advanced_sqrt(double);
 }
 
-// mixed_usage.hpp (mixing old and new)
-namespace math {  // OK: continues without attributes as before
-    double cos(double);
-}
+// translation unit
+#include <old_header.hpp>
+#include <new_feature.hpp>
 
-[[nodiscard]] namespace new_math {  // OK: maintains new attributes
-    double sin(double);
-}
+// advanced_sqrt will have nodiscard attribute while sqrt would retain standard c++ rules
 
-// future_upgrade.hpp (gradual adoption)
-[[nodiscard]] namespace math {  // Error: can't add attributes to math
-    double tan(double);         // Must be consistent throughout program
-}
-```
-
-### 4.2 Cross Translation Unit Consistency
-
-1. **Attribute Consistency**
-   - Attributes must be consistent across all translation units
-   - Same namespace must have same attributes throughout the program
-   - Violating attribute consistency is ill-formed
-   - Compile-time error if attributes mismatch between translation units
-
-2. **Header File Impact**
-   - Headers should declare consistent attributes
-   - Including headers with conflicting attributes is ill-formed
-   - Tools should verify attribute consistency during build
-
-3. **Modules Interaction**
-   - Module interface must declare definitive attributes
-   - Module implementation units must match interface attributes
-   - Importing modules with conflicting attributes is ill-formed
-
-Example of consistency requirements:
-```cpp
-// header1.hpp
-[[nodiscard]] namespace math {
-    double sqrt(double);
-}
-
-// header2.hpp
-namespace math {  // Error: must have [[nodiscard]] to be consistent
-    double pow(double, double);
-}
-
-// header3.hpp
-[[nodiscard]] namespace math {  // OK: consistent with other declarations
-    double sin(double);
-}
 ```
 
 ## 5. Attribute Aliases
@@ -312,65 +318,56 @@ namespace math {  // Error: must have [[nodiscard]] to be consistent
 ### 5.1 Alias Declaration Syntax
 ```cpp
 // Project-specific attribute combinations
-using [[projectx::performance_critical]] = [[nodiscard, constexpr_default]];
-using [[company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused]];
-using [[team::core_math]] = [[nodiscard, constexpr_default]];
+using [[required::projectx::safty_critical]] = [[nodiscard]];
+using [[required::company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused]];
+using [[required::team::core_math]] = [[nodiscard]];
 
 // Usage
-[[projectx::performance_critical]] namespace fast_math {
+[[required::projectx::safty_critical]]
+namespace fast_math 
+{
     double quick_sqrt(double);
 }
 
 // Equivalent to:
-[[nodiscard, constexpr_default]] namespace fast_math {
+[[nodiscard]]
+namespace fast_math 
+{
+    double quick_sqrt(double);
+}
+```
+### 5.2 Alias Rules
+1. Namespace prefix must use format: `required::identifier::identifier`
+3. Aliases are visible after declaration in the same translation unit
+4. Aliases can combine multiple attributes
+5. Aliases cannot be redefined with different attribute sets in the same translation unit
+
+### 5.2.1 "required" prefix
+- "required" prefix in alias name is proposed to be obligatory to solve problem of missing attribute alias declaration
+- default rules for unknown attributes must be retained to maintain backward compatibility
+- any attribute used that starts with "required" prefix and for which alias declaration is not visible should cause compile error
+
+```cpp
+// Project-specific attribute combinations
+using [[required::projectx::safty_critical]] = [[nodiscard]];
+
+// Usage
+[[required::projectx::deprecated_api]] // compile error declaration not visible prior to use
+namespace fast_math 
+{
+    double quick_sqrt(double);
+}
+using [[required::company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused]];
+
+// Equivalent to:
+[[gnu::const]] // retain standard c++ rules for compilers not knowing it, ie ignored
+namespace fast_math 
+{
     double quick_sqrt(double);
 }
 ```
 
-### 5.2 Alias Rules
-1. Namespace prefix must use format: `identifier::identifier`
-2. Cannot conflict with existing vendor namespaces (clang::, gnu::, msvc::)
-3. Aliases are visible after declaration in the same translation unit
-4. Aliases can combine multiple attributes
-5. Aliases cannot be redefined in the same translation unit
-
-## 6. Examples
-
-### 6.1 Complex Alias Usage
-```cpp
-// Define company-wide attribute policies
-using [[megacorp::core_api]] = [[nodiscard, constexpr_default]];
-using [[megacorp::stable_api]] = [[nodiscard]];
-using [[megacorp::legacy_api]] = [[deprecated("contact team X for migration")]];
-
-// Usage in code
-[[megacorp::core_api]] namespace core {
-    template<typename T>
-    T min(T a, T b) { return a < b ? a : b; }
-}
-
-[[megacorp::legacy_api]] namespace old {
-    void old_function();
-}
-```
-
-### 6.2 Mixed Attribute Usage
-```cpp
-// Define performance-critical code attributes
-using [[project::perf]] = [[nodiscard, constexpr_default]];
-
-// Apply to key namespaces
-[[project::perf]] namespace algorithms {
-    bool binary_search(span<const int> data, int value);
-}
-
-// Direct attribute usage for special cases
-[[nodiscard, deprecated("use algorithms::binary_search")]] 
-namespace legacy_algorithms {
-    bool old_search(const int* data, size_t size, int value);
-}
-```
-## 7. Future Considerations
+## 6. Future Considerations
 
 1. Support for modules
 2. Additional core attributes
@@ -378,7 +375,7 @@ namespace legacy_algorithms {
 4. IDE support for attribute visualization
 5. Refactoring tools for attribute management
 
-## 8. Evolution Path
+## 7. Evolution Path
 
 This proposal provides foundation for:
 
@@ -387,6 +384,6 @@ This proposal provides foundation for:
 3. Gradual modernization of C++ codebases
 4. Enhanced static analysis capabilities
 
-## 9. Conclusion
+## 8. Conclusion
 
 This focused proposal provides a practical solution for namespace-level attributes with the addition of powerful attribute aliases. The design maintains backward compatibility while enabling teams to define and enforce their own attribute policies. The cross-translation unit consistency requirements ensure well-defined behavior across the entire program.
