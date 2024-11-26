@@ -268,12 +268,12 @@ namespace math
 [[nodiscard]] 
 constexpr namespace compute 
 {
-    int base_calc(int);  // both attributes applied
+    int base_calc(int);  // constexpr and nodiscard applied
     
     [[maybe_unused]]
     namespace debug 
     {
-        int debug_calc(int);  // maybe_unused only, keeps constexpr_default
+        int debug_calc(int);  // maybe_unused only, keeps constexpr
         
         [[deprecated]]
         namespace old // combines maybe_unused and deprecated
@@ -335,7 +335,7 @@ namespace fast_math
 }
 
 // Equivalent to:
-[[nodiscard]]
+[[nodiscard,type_safety,lifetime_safety]]
 namespace fast_math 
 {
     double quick_sqrt(double);
