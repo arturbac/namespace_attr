@@ -144,6 +144,12 @@ constexpr namespace math {
     }
 }
 ```
+#### Standarized profiles from P3081 
+
+Standarized profiles from P3081 are natural candidates for use with namespace attributes 
+
+[[type_safety]], [[bounds_safety]],[[initialization_safety]],[[lifetime_safety]],[[arithmetic_safety]]
+with all [[suppress(X)]]  variants
 
 ## 2. Attribute Consistency Model
 
@@ -317,8 +323,8 @@ namespace math {
 ### 5.1 Alias Declaration Syntax
 ```cpp
 // Project-specific attribute combinations
-using [[required::projectx::safty_critical]] = [[nodiscard]];
-using [[required::company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused]];
+using [[required::projectx::safty_critical]] = [[nodiscard,type_safety,lifetime_safety]];
+using [[required::company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused, suppress(type_safety)]];
 using [[required::team::core_math]] = [[nodiscard]];
 
 // Usage
