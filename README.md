@@ -3,11 +3,62 @@
 
 ## Motivation & Impact
 
+C++ developers spend significant time adding and reviewing attributes like [[nodiscard]] on every function, often missing some during development which leads to bugs where function results are silently discarded. With the upcoming standardized profiles from P3081, this burden will only increase as more attributes like enforce(type_safety) and enforce(lifetime_safety) need to be consistently applied. Since functions are typically grouped by their purpose and safety requirements, manually repeating the same sets of attributes across entire APIs wastes development time and is error-prone.
+
+For example, current practice often relies on macro definitions:
+
+```cpp
+// Current approach with macros
+#if defined(_MSC_VER)
+    #if defined(MYLIB_EXPORTS)
+        #define MY_LIBRARY_API __declspec(dllexport) 
+    #else
+        #define MY_LIBRARY_API __declspec(dllimport)
+    #endif
+#else
+    #define MY_LIBRARY_API [[visibility("default")
+#endif
+
+namespace algorithms 
+{
+    MY_LIBRARY_API [[nodiscard]] int binary_search(span<int> data, int value);
+    MY_LIBRARY_API [[nodiscard]] int interpolation_search(span<int> data, int value);
+    MY_LIBRARY_API [[nodiscard]] int jump_search(span<int> data, int value);
+    // Easy to forget the macro on new functions
+    int debug_search(span<int> data, int value);  // Missing attributes!
+}
+```
+
 This proposal introduces two key features to C++:
-1. Ability to apply attributes to namespaces, affecting all contained declarations whitin given block of namespace declaration
+1. Ability to apply attributes to namespaces, affecting all contained declarations within given block scope of namespace declaration
 2. Mechanism to define aliases for sets of attributes, enabling consistent attribute policies
 
-These additions provide powerful tools for code organization, maintenance, and evolution while maintaining complete backward compatibility.
+This proposal would simplify this to:
+
+```cpp
+#if defined(_MSC_VER)
+#if defined(MYLIB_EXPORTS)
+using [[required::mylib::api]] = [[msvc::dllexport, nodiscard]];
+#else
+using [[required::mylib::api]] = [[msvc::dllimport, nodiscard]];
+#endif
+#else
+using [[required::mylib::api]] = [[visibility("default"),nodiscard]];
+#endif
+
+[[required::mylib::api]]
+namespace algorithms 
+{
+    int binary_search(span<int> data, int value);      // Automatically gets all attributes
+    int interpolation_search(span<int> data, int value);
+    int jump_search(span<int> data, int value);
+    
+    [[maybe_unused]] // Only need to mark exceptions
+    int debug_search(span<int> data, int value);
+}
+```
+
+These additions transform how we manage code policies, making them explicit and compiler-enforced rather than relying on error-prone manual attribute application or macro definitions. By allowing attributes to be applied at the namespace level for blocks of code, we can ensure consistent policies across related functions while maintaining the flexibility to override them when needed. This approach naturally aligns with how code is actually organized and dramatically reduces the maintenance burden of managing attributes in large codebases.
 
 ### Primary Goals
 1. Simplify code maintenance by reducing repetitive attribute declarations
