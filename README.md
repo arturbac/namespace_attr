@@ -3,7 +3,7 @@
 
 ## Motivation & Impact
 
-C++ developers spend significant time adding and reviewing attributes like [[nodiscard]] on every function, often missing some during development which leads to bugs where function results are silently discarded. With the upcoming standardized profiles from P3081, this burden will only increase as more attributes like enforce(type_safety) and enforce(lifetime_safety) need to be consistently applied. Since functions are typically grouped by their purpose and safety requirements, manually repeating the same sets of attributes across entire APIs wastes development time and is error-prone.
+C++ developers spend significant time adding and reviewing attributes like [[nodiscard]] on every function, often missing some during development which leads to bugs where function results are silently discarded. With the upcoming standardized profiles from P3081, this burden will only increase as more attributes like enforce,apply,suspend need to be consistently applied. Since functions are typically grouped by their purpose and safety requirements, manually repeating the same sets of attributes across entire APIs wastes development time and is error-prone.
 
 For example, current practice often relies on macro definitions:
 
