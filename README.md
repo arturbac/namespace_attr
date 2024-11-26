@@ -148,8 +148,7 @@ constexpr namespace math {
 
 Standarized profiles from P3081 are natural candidates for use with namespace attributes 
 
-[[type_safety]], [[bounds_safety]],[[initialization_safety]],[[lifetime_safety]],[[arithmetic_safety]]
-with all [[suppress(X)]]  variants
+type_safety, bounds_safety, initialization_safety, lifetime_safety, arithmetic_safety
 
 ## 2. Attribute Consistency Model
 
@@ -323,8 +322,8 @@ namespace math {
 ### 5.1 Alias Declaration Syntax
 ```cpp
 // Project-specific attribute combinations
-using [[required::projectx::safty_critical]] = [[nodiscard,type_safety,lifetime_safety]];
-using [[required::company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused, suppress(type_safety)]];
+using [[required::projectx::safty_critical]] = [[nodiscard,enforce(type_safety),enforce(lifetime_safety)]];
+using [[required::company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused, suppress(type_safety,"backward compatibility unsafe")]];
 using [[required::team::core_math]] = [[nodiscard]];
 
 // Usage
@@ -335,7 +334,7 @@ namespace fast_math
 }
 
 // Equivalent to:
-[[nodiscard,type_safety,lifetime_safety]]
+[[nodiscard,enforce(type_safety),enforce(lifetime_safety)]]
 namespace fast_math 
 {
     double quick_sqrt(double);
