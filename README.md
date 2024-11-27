@@ -56,6 +56,17 @@ namespace file_ops {
 
 These additions transform how we manage code policies, making them explicit and compiler-enforced rather than relying on error-prone manual attribute application. By introducing a dedicated policy scope for blocks of code, we can ensure consistent error handling across related functions while maintaining the flexibility to override them when needed. This approach naturally aligns with how error handling code is actually organized and dramatically reduces the maintenance burden of managing attributes in large codebases.
 
+Below is citation from P3081, which explains why I think clang-tidy is not a solution here for missing nodiscard attributes.
+Policy should be applied on code level and not by external tool by checking static analisis on code and every function.
+```
+Note this good summary by David Chisnall in a January 2024 FreeBSD mailing list post, [Chisnall2024]:
+“Between modern C++ with static analysers and Rust, there was a small safety delta.
+The recommendation [to prefer Rust for new projects] was primarily based on a human-
+factors decision: it’s far easier to prevent people from committing code that doesn’t compile
+than it is to prevent them from committing code that raises static analysis warnings.
+If a project isn’t doing pre-merge static analysis, it’s basically impossible.”
+```
+
 ## 1. Core Design Principles
 
 ### 1.1 Basic Rules
