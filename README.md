@@ -7,7 +7,7 @@ Version: 2.0
 
 ## Motivation & Impact
 
-Modern C++ developers spend considerable time adding and reviewing [[nodiscard]] attributes on functions returning std::expected, often missing some during development which leads to silent error handling failures. This repetitive task scales poorly with codebase size, where entire APIs typically share common error handling patterns. Teams waste development cycles maintaining these attributes across related functions while a single oversight can introduce subtle runtime bugs, and by 1 year practice this happens all the time.
+Modern C++ developers spend considerable time adding and reviewing [[nodiscard]] attributes on functions returning std::expected, often missing some during development which leads to silent error handling failures. This repetitive task scales poorly with codebase size, where entire APIs typically share common error handling patterns. Teams waste development cycles maintaining these attributes across related functions while a single oversight can introduce subtle runtime bugs, and by 1 year practice with using expected this happens all the time.
 Making std::expected's error handling non-discardable by default would eliminate this class of bugs while reducing maintenance overhead. When explicit error dismissal is needed, developers would be able by proposed opt-out  [[discardable]] attribute. This change aligns with C++'s "safe by default" philosophy while better matching developer intent in real-world applications.
 
 For example, current practice requires marking each function individually:
