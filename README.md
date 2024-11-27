@@ -513,7 +513,6 @@ namespace fast_math
 }
 using [[required::company::deprecated_api]] = [[deprecated("use v2 API"), maybe_unused]];
 
-// Equivalent to:
 [[gnu::const]] // retain standard c++ rules for compilers not knowing it, ie ignored
 namespace fast_math 
 {
