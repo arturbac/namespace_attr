@@ -341,6 +341,105 @@ constexpr namespace compute
 }
 ```
 
+## 3.5 Attribute Application Rules
+
+The behavior of namespace-level attributes is determined by the attribute type itself, not by the declarations they are applied to. This section defines how different categories of attributes behave when they encounter incompatible declarations.
+
+### 3.5.1 Non-Enforced Attributes
+
+These attributes can be silently ignored for incompatible declarations without generating compiler errors:
+
+#### [[nodiscard]]
+- Silently ignored for void functions/methods
+- Applied to all other function/method declarations that return a value
+- Applied to class/struct declarations affecting their non-void member functions
+
+```cpp
+[[nodiscard]]
+namespace algorithms {
+    int get_value();          // ✓ nodiscard applied
+    void process_data();      // ✓ nodiscard silently ignored (void return)
+    
+    struct result_t {
+        int query();          // ✓ nodiscard applied
+        void clear();         // ✓ nodiscard silently ignored (void return)
+        ~result_t();         // ✓ nodiscard silently ignored (destructor)
+    };
+}
+```
+
+#### [[deprecated]]
+- Should be applied to any names or entities it is allowed to be applied to.
+
+#### [[maybe_unused]]
+- Should be applied to any declarations it is allowed to be applied to.
+
+### 3.5.2 Enforced Attributes
+
+Upcoming safety profiles should follow their use rules example enforce should enforce and cause compile error when it enforcement is violated:
+
+#### enforce() Family
+- enforce(type_safety)
+- enforce(bounds_safety)
+- enforce(lifetime_safety)
+- enforce(arithmetic_safety)
+- enforce(initialization_safety)
+
+```cpp
+using [[required::company::safety]] = [[enforce(type_safety), enforce(bounds_safety)]];
+
+[[required::company::safety]]
+namespace algorithms {
+    int safe_calc(int x);     // ✓ enforces both safety rules
+    
+    void* unsafe_cast(void* ptr) {  // × Error: violates type safety
+        return ptr;
+    }
+    
+    template<typename T>
+    T* array_access(T* arr, size_t i) {  // × Error: violates bounds safety
+        return &arr[i];  
+    }
+}
+```
+
+### 3.5.3 Combined Attribute Behavior
+
+When mixing enforced and non-enforced attributes, each follows its own rules:
+
+```cpp
+using [[required::company::critical]] = [[nodiscard, enforce(type_safety), enforce(lifetime_safety)]];
+
+[[required::company::critical]]
+namespace control_system {
+    int get_sensor();         // ✓ all attributes applied
+    void stop_motor();        // ✓ nodiscard ignored, safety rules enforced
+    
+    void* get_raw_ptr() {     // × Error: violates type safety
+        return nullptr;       //   (enforcement failure takes precedence)
+    }
+    
+    struct device_t {
+        int query();          // ✓ all attributes applied
+        void reset();         // ✓ nodiscard ignored, safety rules enforced
+        ~device_t();         // ✓ nodiscard ignored, safety rules enforced
+    };
+}
+```
+
+### 3.5.4 Key Rules Summary
+
+1. Attribute behavior is determined by the attribute type, not the declaration
+2. Non-enforced attributes can be silently ignored when incompatible
+3. Enforced attributes must cause compilation errors when violated
+4. When mixing attribute types, enforcement failures take precedence
+5. Inheritance of attributes in nested namespaces follows the same rules
+
+This design ensures that:
+- Safety-critical attributes cannot be accidentally bypassed
+- Natural incompatibilities (like nodiscard with void) are handled gracefully
+- Complex attribute combinations behave predictably
+- Code maintainability is preserved through consistent rules
 
 ## 4. Backward Compatibility
 
