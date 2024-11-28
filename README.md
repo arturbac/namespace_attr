@@ -224,8 +224,8 @@ namespace fast_math
 ```
 
 ### 4.2 Alias Rules
-1. Missing attribute (alias) for attribute marked with require shoudl cause compile error
-2. Aliases visible after declaration in same translation unit
+1. Missing attribute (alias) for attribute marked with required keyword should cause compile error
+2. Aliases are visible after declaration in same translation unit
 3. Cannot be redefined in same translation unit to different values, redeclaration with same values should be no op.
 4. Unknown **required** aliases cause compile error
 
