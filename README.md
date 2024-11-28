@@ -8,8 +8,8 @@ Version: 2.0
 ## Motivation & Impact
 
 Modern C++ developers spend considerable time adding and reviewing [[nodiscard]] attributes on functions returning std::expected, often missing some during development which leads to silent error handling failures. This repetitive task scales poorly with codebase size, where entire APIs typically share common error handling patterns. Teams waste development cycles maintaining these attributes across related functions while a single oversight can introduce subtle runtime bugs, and by 1 year practice with using expected this happens all the time.
-Making std::expected's error handling non-discardable by default would eliminate this class of bugs while reducing maintenance overhead. When explicit error dismissal is needed, developers would be able by proposed opt-out  [[discardable]] attribute. This change aligns with C++'s "safe by default" philosophy while better matching developer intent in real-world applications.
-From my experience with large legacy codebases originating from C++98 era of 0.5 and 1mln lines of code, manually applying [[nodiscard]] attributes across thousands of functions is not possible, to time cosuming process and those codebases do not benefit from nodiscard. Use of proposed policy block would allow gradual and realatively easy way to upgrade old code.
+Ability to aplly non-discardable by default policy to blocks of code would eliminate this class of bugs while reducing maintenance overhead. When explicit error dismissal is needed, developers would be able by proposed opt-out  [[discardable]] attribute. This change aligns with C++'s "safe by default" philosophy while better matching developer intent in real-world applications.
+From author experience with large legacy codebases originating from C++98 era of 0.5 and 1mln lines of code, manually applying [[nodiscard]] attributes across thousands of functions is not affordable and possible. This is to time cosuming process and those codebases do not benefit from nodiscard. Use of proposed policy block would allow gradual and realatively fast way to upgrade old code.
 
 For example, current standard requires marking each function individually:
 
@@ -34,7 +34,7 @@ namespace file_ops {
 ```
 
 This proposal introduces two key features to C++:
-1. A new `policy` scope for applying attributes to blocks of code , where keyword name 'policy' is proposed it does not matter what new keyword name will be used for the author.
+1. A new `policy` scope for applying attributes to blocks of code , where keyword name 'policy' is proposed it does not matter for author what new keyword name will be used.
 2. Mechanism to define aliases for sets of attributes, enabling consistent attribute policies
 
 This proposal would simplify this to:
