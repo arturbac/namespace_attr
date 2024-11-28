@@ -9,8 +9,9 @@ Version: 2.0
 
 Modern C++ developers spend considerable time adding and reviewing [[nodiscard]] attributes on functions returning std::expected, often missing some during development which leads to silent error handling failures. This repetitive task scales poorly with codebase size, where entire APIs typically share common error handling patterns. Teams waste development cycles maintaining these attributes across related functions while a single oversight can introduce subtle runtime bugs, and by 1 year practice with using expected this happens all the time.
 Making std::expected's error handling non-discardable by default would eliminate this class of bugs while reducing maintenance overhead. When explicit error dismissal is needed, developers would be able by proposed opt-out  [[discardable]] attribute. This change aligns with C++'s "safe by default" philosophy while better matching developer intent in real-world applications.
+From my experience with large legacy codebases originating from C++98 era of 0.5 and 1mln lines of code, manually applying [[nodiscard]] attributes across thousands of functions is not possible, to time cosuming process and those codebases do not benefit from nodiscard. Use of proposed policy block would allow gradual and realatively easy way to upgrade old code.
 
-For example, current practice requires marking each function individually:
+For example, current standard requires marking each function individually:
 
 ```cpp
 namespace file_ops {
@@ -205,6 +206,9 @@ namespace algorithms {
 
 ## 4. Attribute Aliases
 
+Attribute aliases provide a powerful abstraction mechanism for encapsulating commonly used combinations of attributes while ensuring consistent application across a codebase.
+They act as a single point of maintenance for attribute policies, allowing teams to evolve their safety and code quality requirements over time by updating the alias definitions rather than modifying individual code locations.
+
 ### 4.1 Alias Declaration Syntax
 ```cpp
 // Project-specific attribute combinations
@@ -229,4 +233,4 @@ namespace fast_math
 
 ## 5. Conclusion
 
-The policy-based approach provides a cleaner, more explicit mechanism for managing attributes across blocks of code. The explicit policy keyword makes the intent clearer and avoids potential confusion with regular namespace attributes. This design provides a strong foundation for future language evolution while maintaining backward compatibility and enabling gradual adoption.
+The policy-based approach provides a cleaner, more explicit mechanism for managing attributes across blocks of code. The explicit policy keyword makes the intent clearer and avoids potential confusion with regular namespace attributes. This design provides a strong foundation for future language evolution while maintaining backward compatibility and enabling gradual adoption for large code bases with minimal effort in annotating large portions of code.
