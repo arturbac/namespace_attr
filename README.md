@@ -210,8 +210,8 @@ namespace algorithms {
 ### 4.1 Alias Declaration Syntax
 ```cpp
 // Project-specific attribute combinations
-using [[required projectx::safety_critical]] = [[nodiscard, enforce(type_safety), enforce(lifetime_safety)]];
-using [[required company::deprecated_api]] = [[deprecated("use v2 API"), discardable]];
+using [[projectx::safety_critical]] = [[nodiscard, enforce(type_safety), enforce(lifetime_safety)]];
+using [[company::deprecated_api]] = [[deprecated("use v2 API"), discardable]];
 
 namespace fast_math 
 {
@@ -224,10 +224,10 @@ namespace fast_math
 ```
 
 ### 4.2 Alias Rules
-1. Must use format: `required identifier::identifier`
+1. Missing attribute (alias) for attribute marked with require shoudl cause compile error
 2. Aliases visible after declaration in same translation unit
-3. Cannot be redefined in same translation unit
-4. Unknown required aliases cause compile error
+3. Cannot be redefined in same translation unit to different values, redeclaration with same values should be no op.
+4. Unknown **required** aliases cause compile error
 
 ## 5. Conclusion
 
