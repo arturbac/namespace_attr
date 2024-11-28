@@ -14,14 +14,19 @@ For example, current practice requires marking each function individually:
 
 ```cpp
 namespace file_ops {
-    [[nodiscard]] auto open_file(string_view path) -> expected<file_handle, error_code>;
-    [[nodiscard]] auto write_data(file_handle& file, span<const byte> data) -> expected<size_t, error_code>;
-    [[nodiscard]] auto flush_to_disk(file_handle& file) -> expected<void, error_code>;
+    [[nodiscard]]
+    auto open_file(string_view path) -> expected<file_handle, error_code>;
+    [[nodiscard]]
+    auto write_data(file_handle& file, span<const byte> data) -> expected<size_t, error_code>;
+    [[nodiscard]]
+    auto flush_to_disk(file_handle& file) -> expected<void, error_code>;
     auto close_file(file_handle& file) -> expected<void, error_code>;  // Oops! Missing nodiscard
     
     struct file_writer {
-        [[nodiscard]] auto write_header() -> expected<void, error_code>;
-        [[nodiscard]] auto write_metadata(const metadata& md) -> expected<void, error_code>;
+        [[nodiscard]]
+        auto write_header() -> expected<void, error_code>;
+        [[nodiscard]]
+        auto write_metadata(const metadata& md) -> expected<void, error_code>;
         auto write_footer() -> expected<void, error_code>;  // Oops! Missing nodiscard again
     };
 }
