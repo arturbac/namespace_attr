@@ -186,10 +186,8 @@ namespace algorithms {
 Safety profiles follow strict enforcement rules:
 
 ```cpp
-using [[required company::safety]] = [[enforce(type_safety), enforce(bounds_safety)]];
-
 namespace algorithms {
-    [[required company::safety]]
+    [[enforce(type_safety)]]
     policy {
         auto safe_calc(int x) -> int;     // ✓ enforces both safety rules
         
